@@ -202,6 +202,8 @@ class Aggregator(nn.Module):
 
         # Reshape to [B*S, C, H, W] for patch embedding
         images = images.view(B * S, C_in, H, W)
+
+        # vit model is the same as patch embed
         patch_tokens = self.patch_embed(images)
 
         if isinstance(patch_tokens, dict):

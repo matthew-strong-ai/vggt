@@ -93,5 +93,5 @@ class VGGT(nn.Module, PyTorchModelHubMixin):
         if not self.training:
             predictions["images"] = images  # store the images for visualization during inference
 
-        return predictions
+        return predictions, aggregated_tokens_list
 
