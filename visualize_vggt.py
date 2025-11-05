@@ -27,7 +27,7 @@ print(f"Loaded {len(image_names)} images")
 with torch.no_grad():
     with torch.cuda.amp.autocast(dtype=dtype):
         # Predict attributes including cameras, depth maps, and point maps
-        predictions, tokens_list = model(images)
+        predictions, tokens_list, patch_start_idx = model(images)
 
 print("Model outputs:", predictions.keys())
 
@@ -39,7 +39,26 @@ print(f"Number of token sets: {len(tokens_list)}")
 last_tokens = tokens_list[-1]
 print(f"Shape of last tokens: {last_tokens.shape}")  # Expected shape: [B, S, num_tokens, token_dim]
 
+# return the features for camera pose prediction (the last tensor and the first token in this tensor)
+cam_emb = tokens_list[-1][:, :, 0]
 
+# print shape of camera embedding
+print(f"Shape of camera embedding: {cam_emb.shape}")  # Expected shape: [B, S, token_dim]
+
+
+images_for_pt_head = None
+if len(images.shape) == 4:
+    images_for_pt_head = images[None]  # add batch dimension
+
+with torch.no_grad():
+    with torch.cuda.amp.autocast(dtype=dtype):
+        model.point_head.feature_only = True
+        # get the features for 3D point prediction
+        img_emb = model.point_head(tokens_list, images=images_for_pt_head, patch_start_idx=patch_start_idx)
+
+
+# spatial features are
+print(f"Shape of image embedding: {img_emb.shape}")  # Expected shape: [B, S, token_dim, H', W']
 
 # Create output directory
 os.makedirs("vggt_outputs", exist_ok=True)
